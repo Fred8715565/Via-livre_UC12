@@ -16,12 +16,12 @@ function feedback(p) {
 }
 export function AppProvider({ children }) {
   const [profile, setProfile] = useLS('vl_profile', PROFILE0)
-  const [raw, setRaw] = useLS('vl_places', PLACES)
-  const [history, setHistory] = useLS('vl_history', HISTORY0)
+  const [raw, setRaw] = useLS('vl_places2', PLACES)
+  const [history, setHistory] = useLS('vl_history2', HISTORY0)
   const [notifs, setNotifs] = useLS('vl_notifs', [])
   const [toast, setToast] = useState('')
   const [drone, setDrone] = useState({ running: false, t: 0, destId: null })
-  const places = useMemo(() => raw.map(p => ({ ...p, dist: dist(USER, p.pos) })).sort((a, b) => a.dist - b.dist), [raw])
+  const places = useMemo(() => raw.map(p => ({ ...p, dist: dist(USER, p.pos) })), [raw])
   const step = drone.destId == null ? -1 : stepAt(drone.t)
   const notify = useCallback(text => {
     setNotifs(n => [{ id: Date.now() + Math.random(), text, read: false, time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }, ...n].slice(0, 20))
@@ -51,7 +51,8 @@ export function AppProvider({ children }) {
     markRead: () => setNotifs(n => n.map(x => ({ ...x, read: true }))),
     clearNotifs: () => setNotifs([]),
     startDrone: id => { setDrone({ running: true, t: 0, destId: id }); notify(STEPS[0].msg); feedback(profile) },
-    cancelDrone: () => { setDrone({ running: false, t: 0, destId: null }); notify('Solicitação do drone cancelada.') }
+    cancelDrone: () => { setDrone({ running: false, t: 0, destId: null }); notify('Solicitação do drone cancelada.') },
+    resetDrone: () => setDrone({ running: false, t: 0, destId: null })
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

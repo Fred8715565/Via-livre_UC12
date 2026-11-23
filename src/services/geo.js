@@ -6,3 +6,4 @@ export function dist(a, b) { const r = Math.PI / 180, dLa = (b[0]-a[0])*r, dLo =
 export const fmt = m => m < 1000 ? `${m} m` : `${(m/1000).toFixed(1).replace('.', ',')} km`
 export const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 export const lerp = (a, b, k) => [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k]
+export const offset = (o, m, deg) => { const r = Math.PI / 180, k = (6371000 * Math.PI) / 180; return [o[0] + (m * Math.cos(deg * r)) / k, o[1] + (m * Math.sin(deg * r)) / (k * Math.cos(o[0] * r))] } // ponto a m metros de o, no rumo deg

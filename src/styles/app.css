@@ -730,13 +730,7 @@ select {
 }
 .box.p1 {
   padding-top: 8px;
-  height: 179px;
-}
-.t-perfil .box:nth-of-type(2) {
-  height: 233px;
-}
-.t-perfil .box:nth-of-type(3) {
-  height: 181px;
+  min-height: 179px;
 }
 .box h2,
 .box legend {
@@ -1017,4 +1011,99 @@ textarea {
     animation: none !important;
     transition: none !important;
   }
+}
+
+.box.b2 {
+  min-height: 233px;
+}
+.box.b3 {
+  min-height: 181px;
+}
+.lk {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #d9d9d9;
+}
+.t-perfil .box label:last-child {
+  margin-bottom: 0;
+}
+.t-perfil select {
+  display: block;
+  width: calc(100% + 11px);
+  height: 31px;
+  margin-top: 4px;
+  padding: 0 8px;
+  border: 1px solid #b3b3b3;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 15px;
+}
+/* Painel arrastável (Sinal) e janelas em painel inferior */
+.app.full {
+  padding-bottom: 0;
+}
+.t-sinal {
+  position: relative;
+  overflow: hidden;
+}
+.t-sinal .mp.sig {
+  position: absolute;
+  inset: 0;
+  height: auto;
+}
+.t-sinal .sig .leaflet-bottom {
+  top: 0;
+  bottom: auto;
+}
+.t-sinal .folha {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+  box-shadow: 0 -4px 20px #0002;
+  transition: height 0.25s ease;
+}
+.t-sinal .folha.drag {
+  transition: none;
+}
+.grab {
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: 36px;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 28px 28px 0 0;
+}
+.grab:active {
+  cursor: grabbing;
+}
+.grab:focus-visible {
+  outline-offset: -3px;
+}
+.grab .alca {
+  margin: 0;
+}
+.folha .scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 18px 70px 15px;
+  overscroll-behavior: contain;
+}
+dialog.modal {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 412px;
+  padding: 0 22px 28px;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -8px 30px #0005;
+}
+dialog.modal .grab {
+  margin: 0 -22px 8px;
 }

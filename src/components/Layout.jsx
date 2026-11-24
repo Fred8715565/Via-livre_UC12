@@ -6,7 +6,7 @@ export default function Layout() {
   const { toast, step } = useApp(); const { pathname } = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   const bare = pathname.startsWith('/lugar') || pathname === '/sugerir' || (pathname === '/drone' && step >= 0) // telas sem a barra de abas, como no design
-  return (<div className="app">
+  return (<div className={'app' + (pathname === '/drone' ? ' full' : '')}>
     <a className="skip" href="#main">Ir para o conteúdo</a>
     <main id="main" tabIndex={-1}><Outlet /></main>
     {!bare && <TabBar />}

@@ -16,10 +16,10 @@ export default function Profile() {
     <header className="topo p"><h1>Perfil e ajustes</h1><img className="senac" src="/img/senac-p.png" alt="Senac" width="33" height="21" /></header>
     <fieldset className="box p1"><legend>Seu perfil de mobilidade</legend><div className="pills">{MOBILITY.map(m => (
       <button type="button" key={m} className={'pill' + (d.mobility.includes(m) ? ' on' : '')} aria-pressed={d.mobility.includes(m)} onClick={() => up('mobility', toggle(d.mobility, m))}>{m}</button>))}</div></fieldset>
-    <section className="box"><h2>Preferências do drone-guia</h2>
+    <section className="box b2"><h2>Preferências do drone-guia</h2>
       {[['sound', 'Som do drone', 'Bipe ao decolar, virar e chegar'], ['vibration', 'Vibração', 'Aviso tátil por etapa'], ['slow', 'Velocidade reduzida', 'Para andador ou bengala']].map(([k, t, s]) => (
         <div className="lin" key={k}><span><b>{t}</b><small>{s}</small></span><Switch on={d[k]} set={v => up(k, v)} label={t} /></div>))}</section>
-    <section className="box"><h2>Contato de emergência</h2>
+    <section className="box b3"><h2>Contato de emergência</h2>
       <label>Nome<input value={d.ecName} onChange={e => up('ecName', e.target.value)} autoComplete="name" /></label>
       <label>Telefone<input type="tel" inputMode="tel" value={d.ecPhone} onChange={e => up('ecPhone', e.target.value)} placeholder="(27) 99999-0000" autoComplete="tel" /></label></section>
     <section className="box"><h2>Conta</h2>

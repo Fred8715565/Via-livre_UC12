@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from '@jest/globals'
 import { PLACES } from '../data/places'
 import { USER, dist } from './geo'
 import { filterPlaces, nearest, toggle, validPhone, validateSuggestion } from './places'

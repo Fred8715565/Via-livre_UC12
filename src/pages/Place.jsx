@@ -1,8 +1,9 @@
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import TripActions from '../components/TripActions'
 export default function Place() {
-  const { id } = useParams(); const { places, startDrone } = useApp(); const nav = useNavigate()
+  const { id } = useParams(); const { places } = useApp(); const nav = useNavigate()
   const p = places.find(x => x.id === id)
   if (!p) return <Navigate to="/mapa" replace />
   return (<section className="page t-detalhe">
@@ -12,6 +13,6 @@ export default function Place() {
       <p className="meta">{p.reviews ? `★ ${p.rating.toFixed(1)} · ${p.reviews} avaliações · ` : 'Sugestão sua · '}{p.address}{p.hours ? ` · ${p.hours}` : ''}</p>
       <p className="desc">{p.about || p.notes || 'Lugar sugerido por você.'}</p>
       <ul className="rec">{p.features.map(f => <li key={f}><span aria-hidden="true">✓</span><span>{f}</span></li>)}</ul></div>
-    <div className="rodape"><button className="btn" onClick={() => { startDrone(p.id); nav('/drone?destino=' + p.id) }}>✦ Chamar drone até aqui</button></div>
+    <div className="rodape"><TripActions place={p} /></div>
   </section>)
 }

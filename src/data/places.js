@@ -10,19 +10,10 @@ export const PLACES = [
  { id:'p6', key:'posto', name:'Posto de Saúde Vitória', emoji:'🏥', rating:4.4, reviews:64, address:'Rua da Saúde, 33', hours:'7h–17h', about:'Unidade com rampa de acesso, elevador entre os pavimentos e vagas reservadas na frente.', features:['Rampa','Elevador','Vaga PCD'], pos:at(700, 330) }
 ]
 export const HISTORY0 = [
- { id:'h1', name:'Biblioteca Central', emoji:'📚', date:'2 de setembro', rating:5, placeId:'p1' },
- { id:'h2', name:'Café da Esquina', emoji:'☕', date:'28 de agosto', rating:4, placeId:'p2' },
- { id:'h3', name:'Farmácia Bem-Estar', emoji:'💊', date:'20 de agosto', rating:5, placeId:'p3' },
- { id:'h4', name:'Praça do Mercado', emoji:'🌳', date:'12 de agosto', rating:4, placeId:'p4' }
+ { id:'h1', name:'Biblioteca Central', emoji:'📚', date:'2 de setembro', rating:5, placeId:'p1', via:'Uber' },
+ { id:'h2', name:'Café da Esquina', emoji:'☕', date:'28 de agosto', rating:4, placeId:'p2', via:'Maps' },
+ { id:'h3', name:'Farmácia Bem-Estar', emoji:'💊', date:'20 de agosto', rating:5, placeId:'p3', via:'Uber' },
+ { id:'h4', name:'Praça do Mercado', emoji:'🌳', date:'12 de agosto', rating:4, placeId:'p4', via:'Maps' }
 ]
-export const PROFILE0 = { name:'Marina Alves', mobility:['Cadeira de rodas'], sound:true, vibration:true, slow:false, ecName:'Fulano', ecPhone:'(27) 99999-0000', textSize:100 }
+export const PROFILE0 = { name:'Marina Alves', mobility:['Cadeira de rodas'], confirm:true, wav:true, mapsMode:'walking', ecName:'Fulano', ecPhone:'(27) 99999-0000', textSize:100 }
 export const MOBILITY = ['Cadeira de rodas','Andador','Bengala de apoio','Mobilidade reduzida','Idoso(a)']
-export const STEPS = [
- { t:0, title:'Sinal enviado', d:'Aguardando confirmação', live:'Procurando o drone mais próximo...', msg:'Sinal enviado. Procurando o drone mais próximo.' },
- { t:3000, title:'Drone decolou', d:'Vindo até sua localização', live:'Drone a caminho da sua localização', msg:'O drone decolou e está vindo até você.' },
- { t:7000, title:'Guiando o trajeto', d:'Siga a luz azul do drone', live:'Siga a luz azul do drone', msg:'O drone está guiando o trajeto. Siga a luz azul.' },
- { t:15000, title:'Chegada', d:'Destino acessível confirmado', live:'Destino acessível confirmado', msg:'Você chegou ao destino!' }
-]
-export const stepAt = t => STEPS.reduce((s, x, i) => (t >= x.t ? i : s), 0)
-export const etaMin = s => (s < 0 ? null : Math.max(0, 3 - s))
-export const sheetTitle = s => (s < 0 ? 'Nenhum sinal ativo' : s >= 3 ? 'Chegou ao destino' : 'Drone a caminho')

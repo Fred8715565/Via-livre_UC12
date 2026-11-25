@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from '@jest/globals'
 import { USER, dist, fmt, esc, lerp, offset } from './geo'
 describe('dist', () => {
   test('mesmo ponto = 0', () => expect(dist(USER, USER)).toBe(0))

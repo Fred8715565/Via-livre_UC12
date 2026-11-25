@@ -1,2 +1,15 @@
-// Ponto único para integrar o back-end Express no futuro (hoje o app usa localStorage).
-export const api = (path, opts) => fetch('/api' + path, { headers: { 'Content-Type': 'application/json' }, ...opts }).then(r => (r.status === 204 ? null : r.json()))
+import { supabase } from './supabase'
+
+// Envia o token da sessão atual; o servidor valida-o antes de responder.
+export const api = async (path, opts = {}) => {
+  const { data } = supabase ? await supabase.auth.getSession() : { data: { session: null } }
+  const headers = new Headers(opts.headers || {})
+  headers.set('Content-Type', 'application/json')
+  if (data.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`)
+
+  const response = await fetch('/api' + path, { ...opts, headers })
+  if (response.status === 204) return null
+  const body = await response.json()
+  if (!response.ok) throw new Error(body?.error || 'Erro na solicitação à API.')
+  return body
+}

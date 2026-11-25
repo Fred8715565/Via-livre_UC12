@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test } from '@jest/globals'
 import { clamp, cycleSnap, nearestSnap, shouldDismiss, snapPoints, stepSnap } from './sheet'
 const pts = [150, 442, 740]
 describe('snapPoints', () => {

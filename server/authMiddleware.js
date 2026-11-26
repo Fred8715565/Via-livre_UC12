@@ -26,8 +26,10 @@ export async function requireAuth(req, res, next) {
     const { data, error } = await client.auth.getUser(token)
     if (error || !data?.user) return res.status(401).json({ error: 'Sessão inválida ou expirada.' })
     req.user = data.user
+    req.accessToken = token
     return next()
   } catch {
     return res.status(401).json({ error: 'Não foi possível validar a sessão.' })
   }
 }
+

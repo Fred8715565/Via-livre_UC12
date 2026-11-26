@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
 import { requireAuth } from './authMiddleware.js'
+import { adminRouter } from './admin.js'
 
 // Carrega .env.local para o servidor local. Em produção, configure as variáveis no host.
 dotenv.config({ path: process.env.ENV_FILE || '.env.local' })
@@ -14,6 +15,9 @@ let places = []
 let history = []
 
 app.get('/api/health', (_, res) => res.json({ ok: true }))
+
+// Painel de gestão: exige token válido + papel admin + 2FA (ver server/admin.js).
+app.use('/api/admin', adminRouter)
 
 // Todos os endpoints de dados exigem um access token válido do Supabase.
 app.use('/api/places', requireAuth)

@@ -6,7 +6,7 @@ const ITEMS = [['/', 'Início', Home], ['/mapa', 'Mapa', MapIcon], ['/ir', 'Ir',
 // Celular/tablet: barra de abas embaixo. Computador/notebook (≥ 1024 px): menu lateral.
 export default function TabBar({ hideOnMobile }) {
   const { profile } = useApp(); const { user } = useAuth()
-  const accountName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || profile.name
+  const accountName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || user?.phone || profile.name
   return (<nav className={'tabbar' + (hideOnMobile ? ' hide-m' : '')} aria-label="Principal">
     <span className="brand"><i aria-hidden="true" />Via Livre</span>
     {ITEMS.map(([to, label, Icon]) => (<NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => (isActive ? 'on' : '')}><Icon size={17} strokeWidth={1.6} aria-hidden="true" />{label}</NavLink>))}

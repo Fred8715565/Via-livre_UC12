@@ -77,11 +77,21 @@ O SMTP padrão de teste do Supabase é limitado e não é indicado para produç�
 - A sessão é persistida pelo cliente Supabase. “Lembrar de mim” seleciona `localStorage`; desmarcado, usa `sessionStorage`.
 - O botão **Sair da conta** fica em Perfil e encerra a sessão no Supabase.
 - O servidor Express valida o Bearer token usando Supabase Auth e limita cada endpoint de dados ao usuário autenticado. Para `npm run server`, o `dotenv` carrega `.env.local`; em produção, configure as variáveis de ambiente diretamente no host.
-- O endpoint `/api/health` permanece público; `/api/places` e `/api/history` exigem sessão válida.
+- O endpoint `/api/health` permanece público; `/api/places` e `/api/history` exigem sessão válida; `/api/admin/*` exige administrador com 2FA.
 
 Os dados demonstrativos de lugares, histórico, notificações e preferências continuam no `localStorage`, agora separados por ID da conta autenticada. Na primeira conta, os dados antigos do navegador são migrados uma única vez. Eles ainda não são sincronizados em nuvem entre dispositivos; a identidade e a sessão da conta ficam no Supabase.
 
-## 6. Testes
+## 6. Apple, celular, autenticador (2FA) e painel de gestão
+
+Além de e-mail/senha e Google, o projeto tem **login com Apple**, **login por SMS**, **verificação em duas etapas por aplicativo autenticador (TOTP)** e um **painel de gestão** em `/admin`. O passo a passo de configuração está em **[GUIA-SUPABASE.md](GUIA-SUPABASE.md)**.
+
+Resumo rápido:
+
+- `SUPABASE_SERVICE_ROLE_KEY` (somente no servidor) habilita o painel; veja `.env.example`.
+- O primeiro administrador é criado com `supabase/first-admin.sql`.
+- A chave secreta da Apple é gerada com `node scripts/apple-secret.mjs` e vence a cada 6 meses.
+
+## 7. Testes
 
 Os testes existentes foram migrados de Vitest para Jest e foram adicionados testes para validação de e-mail/senha, cadastro, duplicidade, recuperação, OTP incorreto/expirado, limite de tentativas, redefinição e proteção de rotas.
 
@@ -91,6 +101,9 @@ npm run test:coverage
 ```
 
 ## Estrutura adicionada
+
+(Apple, celular, 2FA e painel: veja a tabela de arquivos no [GUIA-SUPABASE.md](GUIA-SUPABASE.md).)
+
 
 - `src/auth/AuthContext.jsx`: sessão global e ações de autenticação.
 - `src/auth/ProtectedRoute.jsx`: bloqueio das rotas internas.

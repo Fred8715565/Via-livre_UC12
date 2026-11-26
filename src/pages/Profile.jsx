@@ -6,9 +6,10 @@ import { MOBILITY } from '../data/places'
 import { MODES } from '../services/trip'
 import { toggle, validPhone } from '../services/places'
 import { useAuth } from '../auth/AuthContext'
+import MfaSettings from '../components/MfaSettings'
 const Switch = ({ on, set, label }) => <button type="button" role="switch" aria-checked={on} aria-label={label} className={'tg' + (on ? ' on' : '')} onClick={() => set(!on)} />
 export default function Profile() {
-  const { profile, setProfile, notify } = useApp(); const { user, signOut } = useAuth(); const [d, setD] = useState(profile); const [err, setErr] = useState('')
+  const { profile, setProfile, notify } = useApp(); const { user, signOut, isAdmin } = useAuth(); const [d, setD] = useState(profile); const [err, setErr] = useState('')
   const up = (k, v) => setD(x => ({ ...x, [k]: v }))
   const handleSignOut = async () => {
     try { await signOut() }
@@ -31,7 +32,9 @@ export default function Profile() {
       <label>Nome<input value={d.ecName} onChange={e => up('ecName', e.target.value)} autoComplete="name" /></label>
       <label>Telefone<input type="tel" inputMode="tel" value={d.ecPhone} onChange={e => up('ecPhone', e.target.value)} placeholder="(27) 99999-0000" autoComplete="tel" /></label></section>
     <section className="box"><h2>Conta</h2>
-      <div className="auth-account-row"><div><b>{user?.user_metadata?.full_name || profile.name || 'Usuário'}</b><small>{user?.email}</small></div><button type="button" className="auth-logout" onClick={handleSignOut}>Sair da conta</button></div>
+      <div className="auth-account-row"><div><b>{user?.user_metadata?.full_name || profile.name || 'Usuário'}</b><small>{user?.email || user?.phone}</small></div><button type="button" className="auth-logout" onClick={handleSignOut}>Sair da conta</button></div>
+      <MfaSettings />
+      {isAdmin && <Link className="lk" to="/admin"><span>Painel de gestão (admin)</span><ChevronRight size={16} aria-hidden="true" /></Link>}
       <Link className="lk" to="/historico"><span>Ver histórico completo</span><ChevronRight size={16} aria-hidden="true" /></Link>
       <label>Seu nome<input value={d.name} onChange={e => up('name', e.target.value)} /></label>
       <label>Tamanho do texto<select value={d.textSize} onChange={e => up('textSize', +e.target.value)}><option value={100}>Padrão</option><option value={115}>Grande</option><option value={130}>Muito grande</option></select></label></section>

@@ -3,11 +3,13 @@ import { canAccessProtectedRoute } from '../services/authRules'
 import { useAuth } from './AuthContext'
 
 export default function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, loading, mfaReady, needsMfa } = useAuth()
   const location = useLocation()
-  if (loading) return <div className="auth-loading" role="status">Verificando sua sessão…</div>
+  if (loading || (user && !mfaReady)) return <div className="auth-loading" role="status">Verificando sua sessão…</div>
   if (!canAccessProtectedRoute(user, loading)) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
+  // Conta com autenticador ativo, mas o código ainda não foi digitado nesta sessão.
+  if (needsMfa) return <Navigate to="/verificar-2fa" replace state={{ from: location.pathname }} />
   return children
 }

@@ -1,4 +1,4 @@
-import { validateEmail, validatePassword, passwordsMatch } from './authRules.js'
+import { validateEmail, validatePassword, passwordsMatch, normalizePhone, validatePhone, validateTotpCode } from './authRules.js'
 const appOrigin = () => typeof window !== 'undefined' ? window.location.origin : ''
 
 export async function signInWithEmail(client, { email, password, rememberMe = true }) {
@@ -54,4 +54,72 @@ export async function updatePassword(client, password, confirmation) {
   const { data, error } = await client.auth.updateUser({ password })
   if (error) throw error
   return data
+}
+
+// ---------- Login com celular (SMS) ----------
+// Etapa 1: envia o SMS com o código de 6 dígitos. Cria a conta automaticamente se o número for novo.
+export async function requestPhoneCode(client, phone) {
+  const normalized = normalizePhone(phone)
+  if (!validatePhone(normalized)) throw new Error('Informe um celular válido com DDD, por exemplo (27) 99999-0000.')
+  const { error } = await client.auth.signInWithOtp({ phone: normalized })
+  if (error) throw error
+  return normalized
+}
+
+// Etapa 2: confere o código. Se estiver certo, o Supabase já devolve a sessão.
+export async function verifyPhoneCode(client, phone, token, rememberMe = true) {
+  const normalized = normalizePhone(phone)
+  if (!validatePhone(normalized)) throw new Error('Número inválido. Volte e informe o celular novamente.')
+  if (!/^\d{6}$/.test(String(token || ''))) throw new Error('Digite o código de 6 dígitos recebido por SMS.')
+  if (typeof window !== 'undefined') window.localStorage.setItem('vl_auth_remember', String(Boolean(rememberMe)))
+  const { data, error } = await client.auth.verifyOtp({ phone: normalized, token, type: 'sms' })
+  if (error) throw error
+  return data
+}
+
+// ---------- Autenticador (TOTP) ----------
+export async function getAssuranceLevel(client) {
+  const { data, error } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (error) throw error
+  return { currentLevel: data.currentLevel, nextLevel: data.nextLevel }
+}
+
+// listFactors() devolve em `totp` só os fatores já confirmados; os pendentes ficam em `all`.
+export async function listTotpFactors(client) {
+  const { data, error } = await client.auth.mfa.listFactors()
+  if (error) throw error
+  const verified = data?.totp ?? []
+  const pending = (data?.all ?? []).filter(f => f.factor_type === 'totp' && f.status !== 'verified')
+  return { verified, pending }
+}
+
+// Cria o fator e devolve o QR Code (SVG em data URL) e a chave para digitação manual.
+export async function enrollTotp(client) {
+  // Remove tentativas anteriores não concluídas; senão o Supabase recusa nomes repetidos.
+  const { pending } = await listTotpFactors(client)
+  for (const factor of pending) await client.auth.mfa.unenroll({ factorId: factor.id })
+  const friendlyName = `Via Livre ${new Date().toLocaleString('pt-BR')}`
+  const { data, error } = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName, issuer: 'Via Livre' })
+  if (error) throw error
+  return { factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret, uri: data.totp.uri }
+}
+
+// Usado na ativação (confirma o fator) e no login (sobe a sessão de aal1 para aal2).
+export async function verifyTotp(client, factorId, code) {
+  if (!validateTotpCode(code)) throw new Error('Digite o código de 6 dígitos do aplicativo autenticador.')
+  const { data, error } = await client.auth.mfa.challengeAndVerify({ factorId, code })
+  if (error) throw error
+  return data
+}
+
+export async function cancelTotpEnrollment(client, factorId) {
+  const { error } = await client.auth.mfa.unenroll({ factorId })
+  if (error) throw error
+}
+
+// Só funciona com sessão aal2. O refreshSession derruba o nível aal2 do token imediatamente.
+export async function disableTotp(client, factorId) {
+  const { error } = await client.auth.mfa.unenroll({ factorId })
+  if (error) throw error
+  await client.auth.refreshSession()
 }

@@ -10,6 +10,10 @@ export const api = async (path, opts = {}) => {
   const response = await fetch('/api' + path, { ...opts, headers })
   if (response.status === 204) return null
   const body = await response.json()
-  if (!response.ok) throw new Error(body?.error || 'Erro na solicitação à API.')
+  if (!response.ok) {
+    const error = new Error(body?.error || 'Erro na solicitação à API.')
+    error.code = body?.code
+    throw error
+  }
   return body
 }

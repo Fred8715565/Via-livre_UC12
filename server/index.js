@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { requireAuth } from './authMiddleware.js'
 import { adminRouter } from './admin.js'
+import { cleanSuggestion, suggestionStore } from './suggestions.js'
 
 // Carrega .env.local para o servidor local. Em produção, configure as variáveis no host.
 dotenv.config({ path: process.env.ENV_FILE || '.env.local' })
@@ -28,6 +29,16 @@ app.post('/api/places', (req, res) => {
   const place = { id: 'srv' + Date.now(), name, features, ownerId: req.user.id }
   places.push(place)
   return res.status(201).json(place)
+})
+
+// Sugestões de lugares: qualquer usuário logado envia; só a gestão (/api/admin/suggestions) lê e decide.
+app.use('/api/suggestions', requireAuth)
+app.post('/api/suggestions', (req, res) => {
+  const result = cleanSuggestion(req.body)
+  if (result.error) return res.status(400).json({ error: result.error })
+  const added = suggestionStore.add(result.value, { id: req.user.id, label: req.user.email || req.user.id })
+  if (added.error) return res.status(429).json({ error: added.error })
+  return res.status(201).json({ id: added.item.id, status: added.item.status })
 })
 
 app.use('/api/history', requireAuth)

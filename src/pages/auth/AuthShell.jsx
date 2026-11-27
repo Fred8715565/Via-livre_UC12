@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 
 export default function AuthShell({ title, subtitle, children, footer }) {
-  const { isConfigured } = useAuth()
+  const { isConfigured, configProblem } = useAuth()
   return <main className="auth-page">
     <section className="auth-panel" aria-labelledby="auth-title">
       <Link to="/login" className="auth-brand" aria-label="Via Livre - login">
@@ -15,7 +15,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
         <p>{subtitle}</p>
       </div>
       {!isConfigured && <div className="auth-config" role="alert">
-        O serviço de autenticação ainda não foi configurado. Crie o arquivo <code>.env</code> com as chaves do Supabase para habilitar o acesso real.
+        {configProblem}
       </div>}
       {children}
       {footer && <div className="auth-footer">{footer}</div>}

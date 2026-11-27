@@ -7,6 +7,7 @@ import History from '../pages/History'
 import Profile from '../pages/Profile'
 import Place from '../pages/Place'
 import Suggest from '../pages/Suggest'
+import Community from '../pages/Community'
 import ProtectedRoute from '../auth/ProtectedRoute'
 import Login from '../pages/auth/Login'
 import Register from '../pages/auth/Register'
@@ -14,10 +15,11 @@ import ForgotPassword from '../pages/auth/ForgotPassword'
 import VerifyCode from '../pages/auth/VerifyCode'
 import ResetPassword from '../pages/auth/ResetPassword'
 import PasswordChanged from '../pages/auth/PasswordChanged'
-import PhoneLogin from '../pages/auth/PhoneLogin'
 import MfaChallenge from '../pages/auth/MfaChallenge'
 import AdminRoute from '../auth/AdminRoute'
+import AdminLayout from '../pages/admin/AdminLayout'
 import AdminPanel from '../pages/admin/AdminPanel'
+import AdminSuggestions from '../pages/admin/AdminSuggestions'
 
 export default function AppRoutes() {
   return <Routes>
@@ -27,12 +29,15 @@ export default function AppRoutes() {
     <Route path="/verificar-codigo" element={<VerifyCode />} />
     <Route path="/redefinir-senha" element={<ResetPassword />} />
     <Route path="/senha-alterada" element={<PasswordChanged />} />
-    <Route path="/login-celular" element={<PhoneLogin />} />
     <Route path="/verificar-2fa" element={<MfaChallenge />} />
-    <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+    <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+      <Route index element={<AdminPanel />} />
+      <Route path="lugares" element={<AdminSuggestions />} />
+    </Route>
     <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
       <Route index element={<Home />} />
       <Route path="mapa" element={<MapPage />} />
+      <Route path="comunidade" element={<Community />} />
       <Route path="ir" element={<Trip />} />
       <Route path="historico" element={<History />} />
       <Route path="perfil" element={<Profile />} />

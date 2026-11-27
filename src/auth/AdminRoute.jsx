@@ -1,16 +1,16 @@
 import { cloneElement, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
-import { LoaderCircle, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { LoaderCircle, ShieldAlert } from 'lucide-react'
 import { useAuth } from './AuthContext'
 import MfaSettings from '../components/MfaSettings'
 import { api } from '../services/api'
 import { safeAuthError } from '../services/authRules'
 
-// Para abrir o painel o administrador precisa:
+// Para abrir a gestão (usuários e lugares sugeridos) o administrador precisa:
 //   1) ter um autenticador ativo (se não tiver, ativa aqui mesmo);
-//   2) digitar o código atual do app TODA VEZ que entra no painel.
-// A liberação fica só na memória desta tela: sair do painel, recarregar a página ou fechar a aba
-// trava de novo. Isto é a parte visual; quem realmente protege é o servidor (server/admin.js).
+//   2) digitar o código atual do app TODA VEZ que entra (tela "Acesso do administrador").
+// A liberação fica só na memória desta tela: bloquear o painel, recarregar a página ou fechar a aba
+// trava de novo. Vale para todas as páginas da gestão (AdminLayout). Isto é a parte visual; quem realmente protege é o servidor (server/admin.js).
 export default function AdminRoute({ children }) {
   const { user, loading, mfaReady, needsMfa, isAdmin, mfa, refreshAal, session } = useAuth()
   const location = useLocation()
@@ -34,7 +34,11 @@ export default function AdminRoute({ children }) {
     if (tokenRef.current) api('/admin/session', { method: 'DELETE', headers: { 'X-Admin-Session': tokenRef.current } }).catch(() => {})
   }, [])
 
-  const lock = useCallback(() => setPanelToken(''), [])
+  // "Bloquear painel": encerra a sessão no servidor na hora e volta a pedir o código.
+  const lock = useCallback(() => {
+    if (tokenRef.current) api('/admin/session', { method: 'DELETE', headers: { 'X-Admin-Session': tokenRef.current } }).catch(() => {})
+    setPanelToken('')
+  }, [])
 
   if (loading || (user && !mfaReady)) return <div className="auth-loading" role="status">Verificando sua sessão…</div>
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
@@ -79,13 +83,14 @@ function AdminUnlock({ factorId, verify, refreshAal, onUnlocked }) {
     } finally { setBusy(false) }
   }
 
-  return <main className="auth-loading"><form className="adm-gate" onSubmit={submit}>
-    <ShieldCheck size={34} />
-    <h1>Painel de gestão</h1>
-    <p>Digite o código de 6 dígitos que está aparecendo agora no seu aplicativo autenticador. Ele muda a cada 30 segundos e é pedido toda vez que você abre o painel.</p>
-    <input className="auth-code-input" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} pattern="[0-9]{6}" aria-label="Código do autenticador" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus required />
+  return <main className="auth-loading"><form className="adm-gate adm-gate--code" onSubmit={submit}>
+    <span className="adm-eyebrow">Gestão</span>
+    <h1>Acesso do administrador</h1>
+    <label className="adm-mono" htmlFor="admin-code">Código de 6 dígitos do seu app autenticador</label>
+    <input id="admin-code" className="auth-code-input" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} pattern="[0-9]{6}" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} autoFocus required />
+    <p className="adm-muted">O código muda a cada 30 segundos e é pedido toda vez que você abre a gestão.</p>
     {error && <p className="auth-error" role="alert">{error}</p>}
-    <button className="auth-submit adm-gate-link" type="submit" disabled={busy || code.length !== 6}>{busy ? <><LoaderCircle className="spin" size={18} /> Verificando…</> : 'Entrar no painel'}</button>
+    <button className="auth-submit" type="submit" disabled={busy || code.length !== 6}>{busy ? <><LoaderCircle className="spin" size={18} /> Verificando…</> : 'Entrar'}</button>
     <Link className="adm-btn" to="/">Voltar ao app</Link>
   </form></main>
 }

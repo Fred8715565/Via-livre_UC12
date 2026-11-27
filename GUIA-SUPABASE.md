@@ -1,6 +1,6 @@
-# Guia: Apple, celular, autenticador e painel de gestão
+# Guia: autenticador (2FA) e painel de gestão
 
-Este guia explica **o que foi adicionado ao Via Livre, como funciona e o que você precisa configurar** (quase tudo é no painel do Supabase e da Apple — o código já está pronto).
+Este guia explica **o que foi adicionado ao Via Livre, como funciona e o que você precisa configurar** (quase tudo é no painel do Supabase — o código já está pronto).
 
 > Antes de começar: o login com e-mail/senha e Google (README) já precisa estar funcionando, com `.env.local` preenchido.
 
@@ -9,103 +9,50 @@ Este guia explica **o que foi adicionado ao Via Livre, como funciona e o que voc
 ## 0. Como o login funciona agora
 
 ```
-Entrar ──► e-mail/senha | Google | Apple | celular (SMS)      → sessão "aal1"
+Entrar ──► e-mail/senha | Google                           → sessão "aal1"
               │
               ├─ conta SEM autenticador ───────────────────────► app
               └─ conta COM autenticador ─► /verificar-2fa
                                             digita o código     → sessão "aal2" ► app
 ```
 
-- **aal1** = a pessoa provou quem é com *um* fator (senha, SMS, Google ou Apple).
+- **aal1** = a pessoa provou quem é com *um* fator (senha ou Google).
 - **aal2** = provou também o *segundo* fator (código do app autenticador).
 
-**Importante:** o autenticador **não substitui** o primeiro login — o Supabase só aceita TOTP como **segunda etapa**. Ou seja: a pessoa entra por um dos 4 métodos e *depois* digita o código do app. É o padrão de mercado (Google, GitHub, bancos).
+**Importante:** o autenticador **não substitui** o primeiro login — o Supabase só aceita TOTP como **segunda etapa**. Ou seja: a pessoa entra por um dos 2 métodos e *depois* digita o código do app. É o padrão de mercado (Google, GitHub, bancos).
 
 ### O que mudou no projeto
 
 | Arquivo | Para quê |
 |---|---|
-| `src/pages/auth/Login.jsx` | botões **Entrar com Apple** e **Entrar com celular** |
-| `src/pages/auth/PhoneLogin.jsx` | login por SMS (número → código de 6 dígitos) |
 | `src/pages/auth/MfaChallenge.jsx` | tela do código do autenticador depois do login |
 | `src/components/MfaSettings.jsx` | no **Perfil**: ativar/remover o autenticador (QR Code) |
-| `src/auth/AuthContext.jsx` | expõe Apple, celular, nível `aal` e `isAdmin` |
+| `src/auth/AuthContext.jsx` | expõe nível `aal` e `isAdmin` |
 | `src/auth/ProtectedRoute.jsx` | manda para o 2FA se a conta tiver autenticador |
-| `src/auth/AdminRoute.jsx` | só deixa admin com 2FA entrar em `/admin` |
-| `src/pages/admin/AdminPanel.jsx` | o painel de gestão |
-| `server/admin.js` + `adminUtils.js` | API do painel (usa a chave `service_role`) |
-| `scripts/apple-secret.mjs` | gera a chave secreta da Apple |
+| `src/auth/AdminRoute.jsx` | tela **Acesso do administrador** (código de 6 dígitos): só deixa admin com 2FA entrar na gestão |
+| `src/pages/admin/AdminLayout.jsx` | moldura da gestão: cabeçalho, abas (Usuários / Lugares sugeridos) e **Bloquear painel** |
+| `src/pages/admin/AdminPanel.jsx` | página **Usuários** (`/admin`) |
+| `src/pages/admin/AdminSuggestions.jsx` | página **Lugares sugeridos** (`/admin/lugares`) |
+| `src/pages/admin/useAdminCall.js` | envia a sessão do painel em toda chamada da gestão |
+| `server/admin.js` + `adminUtils.js` | API da gestão (usuários usam a chave `service_role`) |
+| `server/suggestions.js` | guarda e valida as sugestões de lugares |
 | `supabase/first-admin.sql` | cria o primeiro administrador |
 
 ---
 
-## 1. Login com Apple
+## 1. Desativar Apple e celular no Supabase
 
-**Você precisa de:** conta paga do [Apple Developer Program](https://developer.apple.com/programs/) (cerca de US$ 99/ano). Sem ela, não há como habilitar o Sign in with Apple.
+O app não mostra mais o login com Apple nem por celular (SMS), mas **tirar o botão não desliga o provedor no servidor**: enquanto estiverem ligados, alguém ainda consegue chamar a API do Supabase direto com a chave pública. No caso do SMS isso também pode gerar **cobrança** do provedor de mensagens.
 
-### 1.1 No site da Apple (developer.apple.com → Certificates, Identifiers & Profiles)
+1. No Supabase: **Authentication → Sign In / Providers → Apple** → desligue e salve.
+2. **Authentication → Sign In / Providers → Phone** → desligue e salve (e, se quiser, apague as credenciais do provedor de SMS).
+3. Opcional: apague a chave `.p8` e o *Services ID* no painel da Apple, se não forem mais usados.
 
-1. **App ID** — *Identifiers → +* → **App IDs** → App. Dê um nome e um Bundle ID (ex.: `br.com.vialivre`). Em *Capabilities*, marque **Sign in with Apple**. Salve.
-2. **Services ID** — *Identifiers → +* → **Services IDs**. Use um identificador como `br.com.vialivre.web` (**este é o seu "Client ID"**). Depois de criar, abra-o, marque **Sign in with Apple** e clique em **Configure**:
-   - *Primary App ID*: o App ID do passo 1.
-   - *Domains*: `SEU-PROJETO.supabase.co` (sem `https://`).
-   - *Return URLs*: `https://SEU-PROJETO.supabase.co/auth/v1/callback`
-3. **Key** — *Keys → +*. Marque **Sign in with Apple**, escolha o App ID e crie. **Baixe o arquivo `.p8` (só dá para baixar uma vez!)** e anote o **Key ID**.
-4. Anote também o seu **Team ID** (canto superior direito do site, 10 caracteres).
-
-> O "SEU-PROJETO" está na URL do Supabase (`Project Settings → API → Project URL`). O Callback URL exato também aparece no painel do Supabase, no provedor Apple.
-
-### 1.2 Gerar o "Secret Key"
-
-A Apple não entrega uma senha pronta: você gera um **JWT assinado com o arquivo `.p8`**. Use o script do projeto:
-
-```bash
-APPLE_TEAM_ID=SEU_TEAM_ID APPLE_KEY_ID=SEU_KEY_ID APPLE_SERVICES_ID=br.com.vialivre.web \
-node scripts/apple-secret.mjs caminho/AuthKey_SEU_KEY_ID.p8
-```
-
-(No PowerShell: defina com `$env:APPLE_TEAM_ID="..."` e rode o `node` em seguida.) O texto longo que aparece é o **Secret Key**.
-
-> ⚠️ **Esse segredo expira em no máximo 6 meses.** Quando vence, o botão da Apple para de funcionar para todo mundo, sem aviso. O script mostra a data de validade — **coloque um lembrete na agenda** e repita este passo antes disso.
-
-### 1.3 No Supabase
-
-1. **Authentication → Sign In / Providers → Apple**: ligue, em **Client IDs** coloque o *Services ID* e em **Secret Key** cole o JWT. Salve.
-2. **Authentication → URL Configuration → Redirect URLs**: confirme que existem `http://localhost:5173/**` e o seu domínio de produção.
-
-### 1.4 Testar
-
-`npm run dev` → *Entrar com Apple*. Dicas:
-- A Apple só informa o **nome** na *primeira* vez que a pessoa autoriza, e o Supabase não preenche o nome automaticamente. O app usa o e-mail quando não há nome.
-- Se a pessoa escolher "ocultar e-mail", chega um endereço `@privaterelay.appleid.com`. Para enviar e-mails a esses endereços, registre seu remetente em *Services → Sign in with Apple for Email Communication* na Apple.
-- Erro `invalid_client` = Services ID diferente do `sub` do JWT, ou secret vencido.
+> Contas criadas antes por Apple ou só por celular continuam existindo no Supabase, mas **a pessoa não consegue mais entrar** por esses caminhos. Quem tinha e-mail real pode usar **Esqueci minha senha** para criar uma senha; contas só de celular (sem e-mail) ficam sem acesso e podem ser excluídas no painel de gestão.
 
 ---
 
-## 2. Login com celular (SMS)
-
-O SMS é enviado por um **provedor externo** (o Supabase não envia SMS sozinho). Suportados: **Twilio**, **Twilio Verify**, **MessageBird** e **Vonage** (TextLocal é mantido pela comunidade).
-
-### 2.1 Configurar
-
-1. Crie conta no provedor (ex.: [Twilio](https://www.twilio.com)) e pegue as credenciais (no Twilio: *Account SID*, *Auth Token* e um *Message Service SID*).
-2. No Supabase: **Authentication → Sign In / Providers → Phone**: ligue e escolha o provedor, preenchendo as credenciais.
-3. Por padrão, o código tem 6 dígitos e só pode ser pedido a cada 60 segundos (o app já mostra o contador de reenvio).
-
-### 2.2 Testar sem gastar SMS
-
-Na própria configuração do provedor **Phone** há a opção de **números de teste com código fixo** (procure por *Test Phone Numbers and OTPs*). Cadastre, por exemplo, `5527999990000=123456` e use esse número no app: o SMS não é enviado e o código é sempre `123456`.
-
-### 2.3 Cuidados de produção
-
-- **Custo e abuso:** robôs podem disparar SMS e gerar cobrança ("SMS pumping"). Ative **CAPTCHA** (Authentication → Attack Protection) e mantenha os limites de requisições do Supabase.
-- **Regras por país:** alguns países exigem cadastro de remetente. Confira as regras do seu provedor para o **Brasil** antes de publicar.
-- O número é guardado em formato internacional (`+5527999990000`). O app aceita `(27) 99999-0000` e converte sozinho; para outros países digite `+` e o código do país.
-- Contas criadas por celular **não têm e-mail** — por isso o Perfil e o painel mostram o telefone.
-
----
-
-## 3. Autenticador (TOTP / 2FA)
+## 2. Autenticador (TOTP / 2FA)
 
 Já vem **ligado por padrão** em todo projeto Supabase e não tem custo. Confira em *Authentication → Sign In / Providers* (ou *Multi-Factor*) que o **TOTP** está habilitado.
 
@@ -114,7 +61,7 @@ Já vem **ligado por padrão** em todo projeto Supabase e não tem custo. Confir
 1. Entra no app → **Perfil → Verificação em duas etapas → Ativar autenticador**.
 2. Escaneia o **QR Code** com Google Authenticator, Microsoft Authenticator, Authy, 1Password etc. (ou digita a chave manualmente).
 3. Digita o código de 6 dígitos → **Ativar**.
-4. A partir daí, depois de qualquer login (senha, Google, Apple ou SMS) aparece a tela **Verificação em duas etapas** pedindo o código.
+4. A partir daí, depois de qualquer login (senha ou Google) aparece a tela **Verificação em duas etapas** pedindo o código.
 
 ### O que o código faz (para você entender)
 
@@ -137,16 +84,24 @@ Se `nextLevel === 'aal2'` e `currentLevel !== 'aal2'`, a pessoa tem autenticador
 
 ---
 
-## 4. Painel de gestão (`/admin`)
+## 3. Painel de gestão (`/admin`)
+
+A gestão tem **duas páginas**, com abas no topo: **Usuários** (`/admin`) e **Lugares sugeridos** (`/admin/lugares`). Você digita o código do autenticador **uma vez** na tela *Acesso do administrador*; ele vale para as duas páginas. O botão **Bloquear painel** encerra essa liberação na hora (sem sair da conta) e volta a pedir o código; **Sair da conta** faz logout de verdade.
 
 ### O que ele faz
 
-- Resumo: usuários, novos e ativos nos últimos 7 dias, com autenticador, bloqueados, administradores, e **quantos entram por e-mail / Google / Apple / celular**.
+- Resumo: usuários, novos e ativos nos últimos 7 dias, com autenticador, bloqueados, administradores, e **quantos entram por e-mail / Google** (contas antigas de Apple ou celular, se existirem, aparecem à parte).
 - Lista com **busca** (nome, e-mail, celular, ID), **filtros** (admins, bloqueados, sem 2FA) e paginação.
 - Ações por usuário: **bloquear/desbloquear**, **tornar/remover admin**, **resetar 2FA**, **excluir conta**.
 - **Atividade recente**: registro de quem fez o quê (fica na memória do servidor e no console; em produção, grave em uma tabela).
 
-### 4.1 Configurar
+### Lugares sugeridos (`/admin/lugares`)
+
+Quando alguém envia um lugar na tela **Sugerir lugar**, o app continua salvando no próprio aparelho **e também envia a sugestão ao servidor** (`POST /api/suggestions`, exige login). Na gestão, o admin vê a fila e pode **aprovar**, **recusar**, **voltar para análise** ou **excluir**, com busca e filtro por status. O servidor valida e limpa os textos de novo (tamanho, recursos repetidos), ignora campos extras como `status` e limita cada pessoa a 20 sugestões aguardando.
+
+Importante: **aprovar só muda o status** — por enquanto a sugestão aprovada não entra sozinha no mapa dos outros usuários. As sugestões ficam **na memória do servidor** (reiniciar apaga a lista); para guardar de forma permanente, troque `server/suggestions.js` por uma tabela do Supabase mantendo as mesmas funções. Esta página **não precisa** da chave `service_role`.
+
+### 3.1 Configurar
 
 1. Em **Project Settings → API**, copie a chave **service_role** (ou *secret key*) e coloque no `.env.local`:
    ```env
@@ -163,15 +118,15 @@ Se `nextLevel === 'aal2'` e `currentLevel !== 'aal2'`, a pessoa tem autenticador
    - **Sem autenticador ainda:** o painel não abre; ele mostra o QR Code ali mesmo para você ativar. Ao confirmar o código, o painel libera.
    - **Com autenticador:** o painel pede o código de 6 dígitos que está aparecendo **naquele momento** no app (ele muda a cada 30 segundos). O código é pedido **toda vez que você abre o painel**: sair da página, recarregar, fechar a aba ou clicar em *Sair* trava o painel de novo. Não existe "janela de X minutos".
 
-### 4.2 Como ele é protegido (3 camadas)
+### 3.2 Como ele é protegido (3 camadas)
 
 1. **Interface** (`AdminRoute`): esconde a página de quem não é admin e pede o código do autenticador. É só conforto — o navegador pode ser adulterado.
-2. **Servidor** (`server/admin.js`): valida o token no Supabase e confere `app_metadata.role === 'admin'` e `aal2`. Para abrir o painel, o admin chama `POST /api/admin/session`, e o servidor só aceita se o código do autenticador foi digitado **no ciclo atual do app** (até 45 segundos: 30 s do código + 15 s de tolerância, lido do claim `amr` do token). Em troca, ele recebe uma **sessão do painel** guardada só na memória do servidor, que todas as outras rotas exigem. Ela é apagada ao sair do painel (ou ao reiniciar o servidor). Esta é a proteção real: mesmo que alguém burle a tela, a API recusa.
+2. **Servidor** (`server/admin.js`): valida o token no Supabase e confere `app_metadata.role === 'admin'` e `aal2`. Para abrir a gestão, o admin chama `POST /api/admin/session`, e o servidor só aceita se o código do autenticador foi digitado **no ciclo atual do app** (até 45 segundos: 30 s do código + 15 s de tolerância, lido do claim `amr` do token). Em troca, ele recebe uma **sessão do painel** guardada só na memória do servidor, que todas as outras rotas exigem. Ela é apagada ao sair do painel (ou ao reiniciar o servidor). Esta é a proteção real: mesmo que alguém burle a tela, a API recusa.
 3. **Papel inalterável pelo usuário:** o papel mora em `app_metadata`, que só pode ser escrito com `service_role`. (`user_metadata` o próprio usuário consegue editar — **nunca** use para permissões.)
 
 Regras de segurança embutidas: o admin não consegue bloquear, excluir ou rebaixar a si mesmo, e IDs são validados.
 
-### 4.3 Bom saber
+### 3.3 Bom saber
 
 - Bloquear impede novos logins e renovação de sessão, mas o token já emitido vale até expirar (até ~1 hora).
 - O servidor guarda a sessão do painel por até 8 horas só como trava contra aba esquecida aberta; na prática ela termina antes, quando você sai do painel.
@@ -181,23 +136,20 @@ Regras de segurança embutidas: o admin não consegue bloquear, excluir ou rebai
 
 ---
 
-## 5. Checklist antes de publicar
+## 4. Checklist antes de publicar
 
 - [ ] `Site URL` e `Redirect URLs` de produção (HTTPS) no Supabase
-- [ ] Apple: Services ID, domínio e Return URL corretos + **lembrete de renovar o secret (6 meses)**
-- [ ] SMS: provedor pago configurado, CAPTCHA ligado, limites revisados
+- [ ] Provedores **Apple** e **Phone** desligados no Supabase (seção 1)
 - [ ] SMTP próprio configurado (README, seção 4)
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` só nas variáveis de ambiente do servidor
 - [ ] Pelo menos 2 admins, cada um com autenticador em 2 aparelhos
 - [ ] `npm test` e `npm run build` passando
 
-## 6. Problemas comuns
+## 5. Problemas comuns
 
 | Sintoma | Causa provável |
 |---|---|
-| "Unsupported provider" ao clicar em Apple | provedor Apple não está habilitado no Supabase |
-| Apple funcionava e parou | Secret Key (JWT) venceu — gere outro (seção 1.2) |
-| "Não foi possível enviar o SMS" | provedor de SMS não configurado, saldo/remetente inválido |
+| Entrar (e-mail ou Google) não faz nada, ou aparece o aviso de chave secreta | `VITE_SUPABASE_ANON_KEY` está com a chave **secreta** (`sb_secret_…`). Use a **publicável** (`sb_publishable_…`) ali e mova a secreta para `SUPABASE_SERVICE_ROLE_KEY` (sem `VITE_`); reinicie o `npm run dev` |
 | Código do autenticador sempre errado | relógio do celular fora de hora (ative "hora automática") |
 | `/admin` volta para o início | a conta não é admin, ou ainda não saiu/entrou depois do SQL |
 | Painel: "SUPABASE_SERVICE_ROLE_KEY não configurada" | falta a chave no `.env.local` ou o servidor não foi reiniciado |

@@ -1,5 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js'
+import { classifyBrowserKey, configProblem } from './keyCheck'
 
 // Lê as variáveis públicas do arquivo .env.local
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -48,14 +49,17 @@ const sessionStorageAdapter = {
   }
 }
 
-// Verifica se as duas variáveis foram carregadas
-export const isSupabaseConfigured = Boolean(
-  supabaseUrl && supabaseAnonKey
-)
+// Aviso exibido nas telas de login quando a configuração não serve (ou null se está tudo certo).
+// Chave secreta no navegador é bloqueada pelo Supabase (401) e ficaria pública: nem criamos o cliente com ela.
+export const supabaseConfigProblem = configProblem(supabaseUrl, supabaseAnonKey)
+
+// Verifica se as duas variáveis foram carregadas e se a chave pode ficar no navegador
+export const isSupabaseConfigured = !supabaseConfigProblem
 
 // Testes temporários
 console.log('URL carregada:', Boolean(supabaseUrl))
 console.log('Chave pública carregada:', Boolean(supabaseAnonKey))
+console.log('Tipo da chave pública:', classifyBrowserKey(supabaseAnonKey))
 console.log('Supabase configurado:', isSupabaseConfigured)
 
 // Cria o cliente somente quando a configuração estiver completa

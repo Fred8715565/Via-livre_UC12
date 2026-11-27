@@ -1,4 +1,4 @@
-import { validateEmail, validatePassword, passwordsMatch, normalizePhone, validatePhone, validateTotpCode } from './authRules.js'
+import { validateEmail, validatePassword, passwordsMatch, validateTotpCode } from './authRules.js'
 const appOrigin = () => typeof window !== 'undefined' ? window.location.origin : ''
 
 export async function signInWithEmail(client, { email, password, rememberMe = true }) {
@@ -52,27 +52,6 @@ export async function updatePassword(client, password, confirmation) {
   if (!validatePassword(password)) throw new Error('Use no mínimo 8 caracteres, com letras maiúsculas, minúsculas e números.')
   if (!passwordsMatch(password, confirmation)) throw new Error('As senhas não coincidem.')
   const { data, error } = await client.auth.updateUser({ password })
-  if (error) throw error
-  return data
-}
-
-// ---------- Login com celular (SMS) ----------
-// Etapa 1: envia o SMS com o código de 6 dígitos. Cria a conta automaticamente se o número for novo.
-export async function requestPhoneCode(client, phone) {
-  const normalized = normalizePhone(phone)
-  if (!validatePhone(normalized)) throw new Error('Informe um celular válido com DDD, por exemplo (27) 99999-0000.')
-  const { error } = await client.auth.signInWithOtp({ phone: normalized })
-  if (error) throw error
-  return normalized
-}
-
-// Etapa 2: confere o código. Se estiver certo, o Supabase já devolve a sessão.
-export async function verifyPhoneCode(client, phone, token, rememberMe = true) {
-  const normalized = normalizePhone(phone)
-  if (!validatePhone(normalized)) throw new Error('Número inválido. Volte e informe o celular novamente.')
-  if (!/^\d{6}$/.test(String(token || ''))) throw new Error('Digite o código de 6 dígitos recebido por SMS.')
-  if (typeof window !== 'undefined') window.localStorage.setItem('vl_auth_remember', String(Boolean(rememberMe)))
-  const { data, error } = await client.auth.verifyOtp({ phone: normalized, token, type: 'sms' })
   if (error) throw error
   return data
 }

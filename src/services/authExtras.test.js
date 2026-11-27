@@ -1,78 +1,15 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals'
 import {
-  isAdminUser, maskPhone, needsMfaChallenge, normalizePhone, safeAuthError, validatePhone, validateTotpCode
+  isAdminUser, needsMfaChallenge, safeAuthError, validateTotpCode
 } from './authRules.js'
 import {
   cancelTotpEnrollment, disableTotp, enrollTotp, getAssuranceLevel, listTotpFactors,
-  requestPhoneCode, verifyPhoneCode, verifyTotp
+  verifyTotp
 } from './authService.js'
 
 const makeClient = auth => ({ auth })
 
 afterEach(() => { delete globalThis.window })
-
-describe('celular (SMS)', () => {
-  test('normaliza o número para o formato internacional, assumindo Brasil', () => {
-    expect(normalizePhone('(27) 99999-0000')).toBe('+5527999990000')
-    expect(normalizePhone('27999990000')).toBe('+5527999990000')
-    expect(normalizePhone('5527999990000')).toBe('+5527999990000')
-    expect(normalizePhone('055 27 99999-0000')).toBe('+5527999990000')
-    expect(normalizePhone('+1 (333) 444-5555')).toBe('+13334445555')
-    expect(normalizePhone('')).toBe('')
-  })
-
-  test('DDD 55 não é confundido com o código do país', () => {
-    expect(normalizePhone('55999990000')).toBe('+5555999990000')
-  })
-
-  test('valida o formato E.164', () => {
-    expect(validatePhone('+5527999990000')).toBe(true)
-    expect(validatePhone('27999990000')).toBe(false)
-    expect(validatePhone('+55')).toBe(false)
-    expect(validatePhone('')).toBe(false)
-  })
-
-  test('mascara o número exibido na tela', () => {
-    expect(maskPhone('+5527999990000')).toBe('+55••••0000')
-  })
-
-  test('requestPhoneCode envia o SMS para o número normalizado', async () => {
-    const signInWithOtp = jest.fn().mockResolvedValue({ error: null })
-    const phone = await requestPhoneCode(makeClient({ signInWithOtp }), '(27) 99999-0000')
-    expect(phone).toBe('+5527999990000')
-    expect(signInWithOtp).toHaveBeenCalledWith({ phone: '+5527999990000' })
-  })
-
-  test('requestPhoneCode recusa número inválido sem chamar o Supabase', async () => {
-    const signInWithOtp = jest.fn()
-    await expect(requestPhoneCode(makeClient({ signInWithOtp }), '123')).rejects.toThrow('celular válido')
-    expect(signInWithOtp).not.toHaveBeenCalled()
-  })
-
-  test('requestPhoneCode repassa erros do provedor de SMS', async () => {
-    const signInWithOtp = jest.fn().mockResolvedValue({ error: new Error('Unsupported phone provider') })
-    await expect(requestPhoneCode(makeClient({ signInWithOtp }), '27999990000')).rejects.toThrow('Unsupported phone provider')
-  })
-
-  test('verifyPhoneCode confirma o código com type sms', async () => {
-    const verifyOtp = jest.fn().mockResolvedValue({ data: { session: { access_token: 'x' } }, error: null })
-    const data = await verifyPhoneCode(makeClient({ verifyOtp }), '27999990000', '123456')
-    expect(data.session.access_token).toBe('x')
-    expect(verifyOtp).toHaveBeenCalledWith({ phone: '+5527999990000', token: '123456', type: 'sms' })
-  })
-
-  test('verifyPhoneCode exige 6 dígitos', async () => {
-    const verifyOtp = jest.fn()
-    await expect(verifyPhoneCode(makeClient({ verifyOtp }), '27999990000', '12ab')).rejects.toThrow('6 dígitos')
-    expect(verifyOtp).not.toHaveBeenCalled()
-  })
-
-  test('código SMS errado ou expirado mostra mensagem segura', () => {
-    expect(safeAuthError({ message: 'Token has expired or is invalid' }, 'phone')).toMatch('SMS')
-    expect(safeAuthError({ message: 'Unsupported phone provider' }, 'phone')).toMatch('enviar o SMS')
-    expect(safeAuthError({ message: 'For security purposes, you can only request this after 59 seconds', code: 'over_sms_send_rate_limit' }, 'phone')).toMatch('Muitas tentativas')
-  })
-})
 
 describe('autenticador (TOTP)', () => {
   test('valida código de 6 dígitos', () => {

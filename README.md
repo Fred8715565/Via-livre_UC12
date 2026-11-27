@@ -77,19 +77,19 @@ O SMTP padrão de teste do Supabase é limitado e não é indicado para produç�
 - A sessão é persistida pelo cliente Supabase. “Lembrar de mim” seleciona `localStorage`; desmarcado, usa `sessionStorage`.
 - O botão **Sair da conta** fica em Perfil e encerra a sessão no Supabase.
 - O servidor Express valida o Bearer token usando Supabase Auth e limita cada endpoint de dados ao usuário autenticado. Para `npm run server`, o `dotenv` carrega `.env.local`; em produção, configure as variáveis de ambiente diretamente no host.
-- O endpoint `/api/health` permanece público; `/api/places` e `/api/history` exigem sessão válida; `/api/admin/*` exige administrador com 2FA.
+- O endpoint `/api/health` permanece público; `/api/places`, `/api/history` e `/api/suggestions` exigem sessão válida; `/api/admin/*` exige administrador com 2FA e a sessão do painel.
 
 Os dados demonstrativos de lugares, histórico, notificações e preferências continuam no `localStorage`, agora separados por ID da conta autenticada. Na primeira conta, os dados antigos do navegador são migrados uma única vez. Eles ainda não são sincronizados em nuvem entre dispositivos; a identidade e a sessão da conta ficam no Supabase.
 
-## 6. Apple, celular, autenticador (2FA) e painel de gestão
+## 6. Autenticador (2FA) e painel de gestão
 
-Além de e-mail/senha e Google, o projeto tem **login com Apple**, **login por SMS**, **verificação em duas etapas por aplicativo autenticador (TOTP)** e um **painel de gestão** em `/admin`. O passo a passo de configuração está em **[GUIA-SUPABASE.md](GUIA-SUPABASE.md)**.
+Além de e-mail/senha e Google, o projeto tem **verificação em duas etapas por aplicativo autenticador (TOTP)** e uma **gestão** com duas páginas: **Usuários** (`/admin`) e **Lugares sugeridos** (`/admin/lugares`), liberadas por um código do autenticador. O passo a passo de configuração está em **[GUIA-SUPABASE.md](GUIA-SUPABASE.md)**.
 
 Resumo rápido:
 
 - `SUPABASE_SERVICE_ROLE_KEY` (somente no servidor) habilita o painel; veja `.env.example`.
 - O primeiro administrador é criado com `supabase/first-admin.sql`.
-- A chave secreta da Apple é gerada com `node scripts/apple-secret.mjs` e vence a cada 6 meses.
+- O login com Apple e o login por celular (SMS) foram removidos; desligue os dois provedores no Supabase (veja a seção 1 do guia).
 
 ## 7. Testes
 
@@ -102,7 +102,7 @@ npm run test:coverage
 
 ## Estrutura adicionada
 
-(Apple, celular, 2FA e painel: veja a tabela de arquivos no [GUIA-SUPABASE.md](GUIA-SUPABASE.md).)
+(2FA e painel: veja a tabela de arquivos no [GUIA-SUPABASE.md](GUIA-SUPABASE.md).)
 
 
 - `src/auth/AuthContext.jsx`: sessão global e ações de autenticação.
@@ -120,3 +120,22 @@ npm run test:coverage
 - [Supabase: Templates de e-mail](https://supabase.com/docs/guides/auth/auth-email-templates)
 - [Supabase: SMTP personalizado](https://supabase.com/docs/guides/auth/auth-smtp)
 - [Supabase: Limites de autenticação](https://supabase.com/docs/guides/auth/rate-limits)
+
+
+## Novidades: Uber, 99 e Comunidade
+
+- Os botões Uber e Google Maps abrem os respectivos destinos com coordenadas. O botão 99 abre o site/app oficial; como a 99 não oferece um deep link público estável para preencher destino, o passageiro informa o local manualmente. Nenhuma corrida é solicitada automaticamente.
+- A aba Comunidade permite publicar e ler relatos associados a um local. Para compartilhar conversas entre contas, execute `supabase/community.sql` no SQL Editor do projeto Supabase. Sem Supabase configurado, as conversas ficam apenas no navegador atual.
+- Foram adicionados 20 pontos ilustrativos em torno da área demonstrativa de Cariacica. Seus endereços e recursos não são verificados; confirme as informações antes de se deslocar.
+
+
+## 8. Comunidade com fotos, respostas, curtidas e CPF privado
+
+1. No Supabase, abra **SQL Editor → New query** e execute `supabase/community-social-profile.sql`.
+2. Acesse **Storage** e confirme o bucket `community-photos` (o SQL cria o bucket e as políticas).
+3. Na Comunidade, usuários autenticados podem publicar fotos JPG/PNG/WEBP de até 5 MB, responder e curtir publicações e respostas.
+4. Em Perfil, o campo CPF é opcional e fica em `user_private_profiles`, com RLS para que cada usuário consulte e altere somente o próprio registro.
+
+**Privacidade/LGPD:** a tabela de autenticação `auth.users` já guarda as contas cadastradas. Não é correto coletar “todos os dados” ou registrar IP/dispositivo sem finalidade definida, transparência, retenção e base legal. CPF é dado pessoal: solicite apenas se houver necessidade real, informe a finalidade e restrinja o acesso. Este exemplo restringe por RLS, mas não criptografa o CPF em nível de coluna; para produção com CPF, recomendamos criptografia no servidor e revisão jurídica/segurança. Nunca exponha `service_role` no frontend.
+
+**Administração:** o projeto já possui `/admin`, papel de administrador em `app_metadata` e desafio MFA/TOTP. A conta administrativa é concedida por `supabase/first-admin.sql`; não compartilhe uma chave mestra no navegador. Para cada administrador, crie uma conta individual e conceda o papel no servidor/Supabase. O autenticador individual é a segunda etapa de acesso.

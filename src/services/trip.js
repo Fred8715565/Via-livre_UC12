@@ -13,3 +13,7 @@ export const uberUrl = p => {
   if (p.address) s('dropoff[formatted_address]', p.address)
   return u.toString()
 }
+
+// A 99 não disponibiliza um deep link público e estável para preencher o destino.
+// Abrimos o canal oficial; o usuário informa o destino no app.
+export const app99Url = () => 'https://99app.com/'

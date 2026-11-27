@@ -9,6 +9,17 @@ export const PLACES = [
  { id:'p5', key:'restaurante', name:'Restaurante Sabor Caseiro', emoji:'🍽️', rating:4.7, reviews:97, address:'Av. Beira Mar, 880', hours:'11h–15h, 18h–23h', about:'Restaurante com rampa na entrada, banheiro adaptado e mesas amplas reservadas perto da porta.', features:['Rampa','Banheiro adaptado','Mesa acessível'], pos:at(620, 120) },
  { id:'p6', key:'posto', name:'Posto de Saúde Vitória', emoji:'🏥', rating:4.4, reviews:64, address:'Rua da Saúde, 33', hours:'7h–17h', about:'Unidade com rampa de acesso, elevador entre os pavimentos e vagas reservadas na frente.', features:['Rampa','Elevador','Vaga PCD'], pos:at(700, 330) }
 ]
+
+// Pontos adicionais ilustrativos para ampliar a exploração inicial.
+// Endereços, posições e recursos devem ser validados pela comunidade antes de uma visita.
+const EXTRA = [
+ ['Centro Cultural', '🎭','Centro','Rampa'],['Parque Municipal', '🌲','Centro','Piso nivelado'],['Terminal Urbano', '🚌','Centro','Entrada nivelada'],['Centro Esportivo', '🏟️','Campo Grande','Vaga PCD'],['Museu da Cidade', '🏛️','Centro','Rampa'],
+ ['Unidade de Saúde', '🏥','Campo Grande','Banheiro adaptado'],['Mercado Municipal', '🛒','Centro','Entrada nivelada'],['Praça da Estação', '🌳','Centro','Piso nivelado'],['Biblioteca do Bairro', '📚','Jardim América','Rampa'],['Restaurante Popular', '🍽️','Centro','Mesa acessível'],
+ ['Centro de Atendimento', '🏢','Campo Grande','Elevador'],['Feira Comunitária', '🥬','Centro','Piso nivelado'],['Quadra Pública', '🏀','Jardim América','Vaga PCD'],['Parque Infantil', '🛝','Campo Grande','Piso nivelado'],['Igreja do Centro', '⛪','Centro','Rampa'],
+ ['Espaço de Eventos', '🎪','Campo Grande','Entrada nivelada'],['Agência de Serviços', '🏦','Centro','Elevador'],['Ponto de Cultura', '🎨','Jardim América','Rampa'],['Centro de Convivência', '🤝','Campo Grande','Banheiro adaptado'],['Polo Educacional', '🎓','Centro','Elevador']
+].map(([name, emoji, neighborhood, feature], i) => ({ id:`extra${i+1}`, name, emoji, address:`${neighborhood} — Cariacica, ES (localização ilustrativa)`, hours:'Consulte o local', about:'Ponto demonstrativo. Endereço, acessibilidade e funcionamento ainda precisam ser confirmados por moradores antes do deslocamento.', notes:'Informação comunitária pendente de validação.', features:[feature], pos:at(850 + i*85, (i*47)%360) }))
+PLACES.push(...EXTRA)
+
 export const HISTORY0 = [
  { id:'h1', name:'Biblioteca Central', emoji:'📚', date:'2 de setembro', rating:5, placeId:'p1', via:'Uber' },
  { id:'h2', name:'Café da Esquina', emoji:'☕', date:'28 de agosto', rating:4, placeId:'p2', via:'Maps' },

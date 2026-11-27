@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { isSupabaseConfigured, setRememberMe, supabase } from '../services/supabase'
+import { isSupabaseConfigured, setRememberMe, supabase, supabaseConfigProblem } from '../services/supabase'
 import {
   cancelTotpEnrollment, disableTotp, enrollTotp, getAssuranceLevel, listTotpFactors,
-  requestPhoneCode, signInWithEmail, signUpWithEmail, verifyPhoneCode, verifyTotp
+  signInWithEmail, signUpWithEmail, verifyTotp
 } from '../services/authService'
 import { isAdminUser, needsMfaChallenge } from '../services/authRules'
 
@@ -33,7 +33,7 @@ async function oauth(provider, rememberMe) {
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  // Nível de autenticação (aal1 = senha/SMS/social; aal2 = depois do código do autenticador).
+  // Nível de autenticação (aal1 = senha/Google; aal2 = depois do código do autenticador).
   const [aalState, setAalState] = useState({ userId: null, aal: null })
 
   useEffect(() => {
@@ -91,6 +91,7 @@ export function AuthProvider({ children }) {
     session,
     loading,
     isConfigured: isSupabaseConfigured,
+    configProblem: supabaseConfigProblem,
     // 2FA / autenticador
     aal,
     mfaReady,
@@ -103,9 +104,6 @@ export function AuthProvider({ children }) {
     signIn: credentials => signInWithEmail(supabase, credentials),
     signUp: details => signUpWithEmail(supabase, details),
     signInWithGoogle: rememberMe => oauth('google', rememberMe),
-    signInWithApple: rememberMe => oauth('apple', rememberMe),
-    requestPhoneCode: phone => requestPhoneCode(supabase, phone),
-    verifyPhoneCode: (phone, token, rememberMe) => verifyPhoneCode(supabase, phone, token, rememberMe),
     signOut: async () => {
       if (!supabase) return
       const { error } = await supabase.auth.signOut()

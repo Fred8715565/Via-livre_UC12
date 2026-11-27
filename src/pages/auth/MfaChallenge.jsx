@@ -5,7 +5,7 @@ import AuthShell from './AuthShell'
 import { useAuth } from '../../auth/AuthContext'
 import { safeAuthError } from '../../services/authRules'
 
-// Segunda etapa do login: o usuário já passou pela senha/SMS/Google/Apple (aal1)
+// Segunda etapa do login: o usuário já passou pela senha/Google (aal1)
 // e agora confirma o código do aplicativo autenticador para chegar ao aal2.
 export default function MfaChallenge() {
   const { user, loading, mfaReady, needsMfa, mfa, refreshAal, signOut, isConfigured } = useAuth()
@@ -50,7 +50,7 @@ export default function MfaChallenge() {
 
   return <AuthShell title="Verificação em duas etapas" subtitle="Abra seu aplicativo autenticador e digite o código de 6 dígitos do Via Livre.">
     <form className="auth-form" onSubmit={verify}>
-      <div className="auth-email-note"><ShieldCheck size={19} /><span>Conta: <b>{user.email || user.phone}</b></span></div>
+      <div className="auth-email-note"><ShieldCheck size={19} /><span>Conta: <b>{user.email}</b></span></div>
       <label className="auth-label" htmlFor="mfa-code">Código do autenticador</label>
       <input className="auth-code-input" id="mfa-code" type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} pattern="[0-9]{6}" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required autoFocus />
       <p className="auth-hint">O código muda a cada 30 segundos. Funciona com Google Authenticator, Microsoft Authenticator, Authy, 1Password e similares.</p>

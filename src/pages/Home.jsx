@@ -22,12 +22,12 @@ export default function Home() {
           {notifs.length === 0 ? <p>Nenhuma notificação ainda. Abra o Uber ou o Maps para começar.</p> : <ul>{notifs.map(n => <li key={n.id}><small>{n.time}</small> {n.text}</li>)}</ul>}
           {notifs.length > 0 && <button className="link" onClick={clearNotifs}>Limpar notificações</button>}</div>)}</div></header>
     <div className="saud"><h1>Bom te ver, {displayName.split(' ')[0] || 'bem-vindo(a)'}</h1>
-      <p className="sub">Chegue ao lugar acessível mais perto de você, de Uber ou pelo Maps.</p></div>
-    <section className="hero"><small>COMO IR</small><h2>Escolha como chegar: de Uber ou pelo Maps</h2>
+      <p className="sub">Encontre locais, converse com a comunidade e escolha Uber, 99 ou Maps para chegar.</p></div>
+    <section className="hero"><small>COMO IR</small><h2>Escolha como chegar: Uber, 99 ou Maps</h2>
       <p className="alvo">Mais perto de você: <b>{target.name}</b> · {fmt(target.dist)}</p><TripActions place={target} /></section>
     <div className="mp ini"><LMap markers={markers} fitKey="home" label="Mapa com sua localização e lugares acessíveis por perto" /></div>
     <div className="linha"><h3>Perto de você</h3><Link className="link" to="/mapa">ver mapa</Link></div>
     <div className="cards-home">{near.map(p => <PlaceCard key={p.id} p={p} />)}</div>
-    <p className="aviso"><b>Antes de ir</b>: confira os recursos do lugar. O Uber depende de motoristas na sua região (escolha o carro acessível quando houver) e o Maps não cobra corrida. Os lugares deste app são demonstrativos.</p>
+    <p className="aviso"><b>Antes de ir</b>: confira os recursos do lugar. Uber e 99 dependem de disponibilidade na sua região. O link da 99 abre o canal oficial para você informar o destino. Os locais extras são ilustrativos e precisam ser confirmados.</p>
   </section>)
 }

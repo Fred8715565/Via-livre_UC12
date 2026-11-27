@@ -43,7 +43,7 @@ export function AppProvider({ children }) {
     addPlace: p => setRaw(r => [...r, { ...p, id: 'u' + Date.now(), emoji: '📍', rating: 0, reviews: 0, user: true, pos: [USER[0] + (Math.random() - 0.5) * 0.006, USER[1] + (Math.random() - 0.5) * 0.006] }]),
     addTrip: (p, via) => {
       setHistory(h => [{ id: 'h' + Date.now(), name: p.name, emoji: p.emoji || '📍', placeId: p.id, via, rating: 0, date: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }) }, ...h].slice(0, 30))
-      notify(`Abrindo ${via === 'Uber' ? 'o Uber' : 'o Maps'} para ${p.name}.`)
+      notify(`Abrindo ${via === 'Uber' ? 'o Uber' : via === '99' ? 'a 99' : 'o Maps'} para ${p.name}.`)
     },
     rate: (id, rating) => setHistory(h => h.map(x => (x.id === id ? { ...x, rating } : x))),
     removeTrip: id => setHistory(h => h.filter(x => x.id !== id)),

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'node:crypto'
 import { requireAuth } from './authMiddleware.js'
+import { STATUSES, suggestionStore } from './suggestions.js'
 import { BAN_FOREVER, PanelSessions, UUID, computeStats, filterUsers, hasFreshTotp, mapUser, readAal, sortByNewest } from './adminUtils.js'
 
 // ⚠️ A chave service_role ignora todas as regras de segurança do banco.
@@ -114,7 +115,36 @@ adminRouter.delete('/session', (req, res) => {
 })
 
 // Tudo abaixo exige a sessão do painel (ou seja, um código do autenticador na entrada).
-adminRouter.use(requireServiceKey, requirePanelSession)
+adminRouter.use(requirePanelSession)
+
+// ---- Lugares sugeridos (/admin/lugares). Não usam a chave service_role. ----
+const SUGGESTION_ACTION = { approved: 'aprovou a sugestão', rejected: 'recusou a sugestão', pending: 'devolveu para análise a sugestão' }
+
+adminRouter.get('/suggestions', (req, res) => {
+  const status = STATUSES.includes(req.query.status) ? req.query.status : 'all'
+  res.json({ suggestions: suggestionStore.list({ status, q: req.query.q }), counts: suggestionStore.counts() })
+})
+
+adminRouter.post('/suggestions/:id/status', (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(400).json({ error: 'ID de sugestão inválido.' })
+  const status = req.body?.status
+  if (!STATUSES.includes(status)) return res.status(400).json({ error: 'Status inválido.' })
+  const item = suggestionStore.setStatus(req.params.id, status, labelOf(req.user))
+  if (!item) return res.status(404).json({ error: 'Sugestão não encontrada (o servidor pode ter sido reiniciado).' })
+  audit(req, SUGGESTION_ACTION[status], { label: item.name })
+  return res.json({ ok: true, suggestion: item })
+})
+
+adminRouter.delete('/suggestions/:id', (req, res) => {
+  if (!UUID.test(req.params.id)) return res.status(400).json({ error: 'ID de sugestão inválido.' })
+  const item = suggestionStore.items.find(entry => entry.id === req.params.id)
+  if (!item || !suggestionStore.remove(req.params.id)) return res.status(404).json({ error: 'Sugestão não encontrada.' })
+  audit(req, 'excluiu a sugestão', { label: item.name })
+  return res.status(204).end()
+})
+
+// ---- Usuários (precisam da chave service_role) ----
+adminRouter.use(requireServiceKey)
 
 adminRouter.get('/stats', handler(async (req, res) => {
   res.json({ stats: computeStats(await loadUsers(req.admin)) })

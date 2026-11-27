@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { FEATURES } from '../services/geo'
 import { toggle, validateSuggestion } from '../services/places'
+import { api } from '../services/api'
 export default function Suggest() {
   const { addPlace, notify } = useApp(); const nav = useNavigate()
   const [f, setF] = useState({ name: '', address: '', notes: '' }); const [feats, setFeats] = useState([]); const [err, setErr] = useState('')
@@ -11,6 +12,8 @@ export default function Suggest() {
   const submit = e => { e.preventDefault()
     const errs = validateSuggestion({ ...f, features: feats }); if (errs.length) return setErr(errs[0])
     addPlace({ name: f.name.trim(), address: f.address.trim(), notes: f.notes.trim(), features: feats })
+    // Envia também para a gestão revisar (/admin/lugares). Se o servidor estiver fora do ar, a sugestão continua salva aqui.
+    api('/suggestions', { method: 'POST', body: JSON.stringify({ name: f.name, address: f.address, notes: f.notes, features: feats }) }).catch(() => {})
     notify(`Obrigado! "${f.name.trim()}" foi adicionado como sugestão.`); nav('/mapa') }
   return (<form className="page t-sugerir" onSubmit={submit} noValidate>
     <div className="barra"><button type="button" className="rd" onClick={() => nav(-1)} aria-label="Voltar"><ArrowLeft size={17} /></button><h1>Sugerir lugar</h1><i /></div>

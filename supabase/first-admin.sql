@@ -6,9 +6,6 @@ update auth.users
 set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
 where email = 'fredericosouzamartins19@gmail.com';   -- troque pelo e-mail da conta (a conta precisa existir)
 
--- Conta criada só com celular? Use o telefone sem o "+":
--- where phone = '5527999990000';
-
 -- Conferir quem é admin:
 select id, email, phone, raw_app_meta_data ->> 'role' as role
 from auth.users

@@ -1564,13 +1564,6 @@ dialog.modal .grab {
   .auth-account-row { align-items: flex-start; flex-direction: column; }
 }
 
-/* ---------- Login com Apple / celular ---------- */
-.auth-apple { width: 100%; min-height: 47px; display: flex; justify-content: center; align-items: center; gap: 10px; background: #000; border: 1px solid #000; border-radius: 10px; color: #fff; font-size: .83rem; font-weight: 700; transition: background .2s, transform .2s; }
-.auth-apple:hover:not(:disabled) { background: #1d1d1f; transform: translateY(-1px); }
-.auth-apple:disabled { cursor: not-allowed; opacity: .5; }
-.auth-link-btn { text-decoration: none; }
-.auth-link-btn[aria-disabled="true"] { pointer-events: none; opacity: .5; }
-
 /* ---------- Verificação em duas etapas (Perfil) ---------- */
 .mfa-box { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; border-bottom: 1px solid #eceff1; margin-bottom: 4px; }
 .mfa-head { display: flex; align-items: flex-start; gap: 10px; }
@@ -1659,3 +1652,68 @@ dialog.modal .grab {
 .adm-gate.wide .adm-btn { align-self: center; }
 .adm-gate form, .adm-gate .auth-code-input { width: 100%; }
 .adm-gate .adm-btn { justify-content: center; }
+
+/* ---------- Gestão: acesso por código (estilo Prisma), abas e lugares sugeridos ---------- */
+.adm-gate--code { width: min(480px, calc(100vw - 32px)); max-width: none; align-items: stretch; text-align: left; gap: 10px; }
+.adm-gate--code h1 { font-size: 1.55rem; letter-spacing: -.03em; }
+.adm-eyebrow, .adm-mono { font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace; }
+.adm-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #2f7f74; }
+.adm-mono { font-size: .74rem; line-height: 1.45; color: #55606b; }
+.adm-gate--code .adm-muted { margin: 0; text-align: left; }
+.adm-gate--code .adm-btn { align-self: flex-start; }
+.adm-nav { display: flex; gap: 4px; padding: 0 clamp(16px, 4vw, 40px); background: #fff; border-bottom: 1px solid #e3e8ea; overflow-x: auto; }
+.adm-nav a { padding: 12px 14px; font-size: .8rem; font-weight: 700; color: #66727f; text-decoration: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+.adm-nav a:hover { color: var(--navy); }
+.adm-nav a.active { color: var(--navy); border-bottom-color: var(--tq); }
+.adm-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.adm-chips button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px; border: 1px solid #dce2e5; border-radius: 99px; background: #fff; color: #354050; font-size: .76rem; font-weight: 700; }
+.adm-chips button b { min-width: 20px; padding: 1px 6px; border-radius: 99px; background: #eef2f3; font-size: .68rem; text-align: center; }
+.adm-chips button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.adm-chips button.on b { background: #ffffff26; }
+.adm-sug-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.adm-sug { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 14px; border: 1px solid #e3e8ea; border-radius: 12px; }
+.adm-sug.busy { opacity: .5; }
+.adm-sug-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.adm-sug-main h3 { font-size: .92rem; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.adm-sug-main p { font-size: .8rem; color: #55606b; overflow-wrap: anywhere; }
+.adm-sug-main small { color: #78828b; font-size: .7rem; overflow-wrap: anywhere; }
+.adm-sug-notes { font-style: italic; }
+@media (max-width: 560px) { .adm-sug { flex-direction: column; } }
+
+/* Integração de mobilidade e mural comunitário */
+.acoes { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.acoes .btn { min-width:0; padding:0 8px; font-size:.84rem; }
+.acoes .btn.noventa { background:#ffe36a; color:#161616; }
+.community-page { padding-top:24px; }
+.community-page .barra { margin-top:0; }
+.community-page .barra h1 { display:flex; align-items:center; gap:8px; }
+.community-intro { margin:14px 0 18px; color:#555; line-height:1.5; }
+.community-form { display:grid; gap:12px; padding:16px; border:1px solid var(--ln); border-radius:14px; }
+.community-form label { display:grid; gap:6px; font-size:.88rem; font-weight:700; }
+.community-form textarea { width:100%; border:1px solid #aaa; border-radius:8px; padding:10px; resize:vertical; }
+.community-list { display:grid; gap:10px; }
+.community-post { border:1px solid var(--ln); border-radius:12px; padding:13px; display:grid; gap:8px; }
+.community-post .row small { color:#777; font-size:.72rem; }
+.community-post strong { color:#327b70; font-size:.85rem; }
+.community-post p { line-height:1.45; overflow-wrap:anywhere; }
+
+/* Comunidade: fotos, curtidas e respostas */
+.community-photo { display:flex !important; align-items:center; flex-wrap:wrap; gap:8px !important; cursor:pointer; }
+.community-photo input { max-width:100%; font-weight:400; }
+.community-post-photo { display:block; width:100%; max-height:420px; object-fit:contain; border-radius:10px; background:#f3f5f5; }
+.community-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.community-actions button, .community-comment button { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--ln); border-radius:8px; padding:7px 10px; background:#fff; color:inherit; cursor:pointer; }
+.community-comments { display:grid; gap:9px; border-top:1px solid var(--ln); padding-top:10px; }
+.community-comment { padding:9px 11px; border-radius:9px; background:#f7f9f9; }
+.community-comment > div { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:.8rem; }
+.community-comment small { color:#777; }
+.community-comment p { margin:5px 0; font-size:.86rem; }
+.community-comment button { padding:4px 8px; font-size:.75rem; }
+.community-reply { display:flex; gap:7px; }
+.community-reply input { flex:1; min-width:0; border:1px solid #cbd2d3; border-radius:8px; padding:9px 11px; }
+.community-reply button { display:grid; place-items:center; min-width:40px; border:0; border-radius:8px; background:var(--tq); color:#fff; }
+.community-reply button:disabled { opacity:.5; }
+
+.community-official { display:flex !important; align-items:center; gap:8px !important; font-weight:600 !important; }
+.community-official input { width:auto; }
+.community-official-tag { display:inline-block; width:max-content; padding:4px 8px; border-radius:99px; background:#e5f4f1; color:#246e63; font-size:.72rem; font-weight:700; }
